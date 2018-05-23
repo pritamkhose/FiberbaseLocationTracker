@@ -1,0 +1,133 @@
+{
+	"variables": [],
+	"info": {
+		"name": "fiberstore",
+		"_postman_id": "ef5a4e33-617d-95da-3410-c4f21267dfc5",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "https://angular-db-fa163.firebaseio.com/users.json",
+			"request": {
+				"url": "https://angular-db-fa163.firebaseio.com/users.json",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "https://angular-db-fa163.firebaseio.com/users.json",
+			"request": {
+				"url": "https://angular-db-fa163.firebaseio.com/users.json",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"users\": {\r\n    \"alanisawesome123\": {\r\n      \"date_of_birth\": \"July 23, 2004\",\r\n      \"full_name\": \"Alan12 Turing\"\r\n    }\r\n  },\r\n   \"alanisawesome\": {\r\n      \"date_of_birth\": \"June 23, 1912\",\r\n      \"full_name\": \"Alan Turing\",\r\n      \"nickname\": \"Alan The Machine\"\r\n    },\r\n    \"gracehop\": {\r\n      \"date_of_birth\": \"December 9, 1906\",\r\n      \"full_name\": \"Grace Hopper\",\r\n      \"nickname\": \"Amazing Grace\"\r\n    },\r\n    \"nikita\": \"khose\"\r\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "https://angular-db-fa163.firebaseio.com/users.json",
+			"request": {
+				"url": "https://angular-db-fa163.firebaseio.com/users.json",
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": " {\r\n    \"alanisawesome99\": {\r\n      \"date_of_birth\": \"June 23, 1912\",\r\n      \"full_name\": \"Alan Turing\",\r\n      \"nickname\": \"Alan The Machine\"\r\n    }\r\n  }\r\n"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "https://angular-db-fa163.firebaseio.com/users.json",
+			"request": {
+				"url": "https://angular-db-fa163.firebaseio.com/users.json",
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"alanisawesome/nickname\": \"Alan The Machine\",\r\n  \"gracehopper/nickname\": \"Amazing Grace\"\r\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "https://angular-db-fa163.firebaseio.com/users.json",
+			"request": {
+				"url": "https://angular-db-fa163.firebaseio.com/users.json",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"posts\": {\r\n    \"-JSOpn9ZC54A4P4RoqVa\": {\r\n      \"author\": \"alanisawesome\",\r\n      \"title\": \"The Turing Machine\"\r\n    }\r\n  }\r\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "https://angular-db-fa163.firebaseio.com/users/alanisawesome99.json",
+			"request": {
+				"url": "https://angular-db-fa163.firebaseio.com/users/alanisawesome99.json",
+				"method": "DELETE",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "https://angular-db-fa163.firebaseio.com/users/createdAt.json",
+			"request": {
+				"url": "https://angular-db-fa163.firebaseio.com/users/createdAt.json",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\".sv\": \"timestamp\"}"
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
