@@ -11,6 +11,13 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <Switch
+            android:id="@+id/gpsswitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Location backgroud update"
+             />
+
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -31,6 +38,7 @@
             />
 
     </LinearLayout>
+
 
 
 
