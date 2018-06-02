@@ -11,6 +11,8 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.pritam.fiberbaselocationtracker.MyApplication;
+import com.pritam.fiberbaselocationtracker.Utilies;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -34,7 +36,7 @@ import okhttp3.Response;
 
 
 class LocatioUpdateWebservice {
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    //@RequiresApi(api = Build.VERSION_CODES.O)
     public LocatioUpdateWebservice(Location location) {
 
         String timeStamp = new SimpleDateFormat("yyyy.MM.dd-HH.mm.ss.SSS").format(new Date());
@@ -58,7 +60,7 @@ class LocatioUpdateWebservice {
 
     private void http_post_request(String postBody, String date) {
         try {
-            String url = "https://angular-db-fa163.firebaseio.com/locationtrack/"+date+".json";
+            String url = "https://angular-db-fa163.firebaseio.com/locationtrack/"+ MyApplication.deviceID+"/"+date+".json";
 
             MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 

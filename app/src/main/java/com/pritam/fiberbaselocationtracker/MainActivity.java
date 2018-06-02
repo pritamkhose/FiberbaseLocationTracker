@@ -1,6 +1,8 @@
 package com.pritam.fiberbaselocationtracker;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -8,7 +10,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -19,6 +23,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -29,10 +34,23 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.pritam.fiberbaselocationtracker.services.LocationMonitoringService;
+
+import com.google.gson.JsonArray;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -40,6 +58,8 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
@@ -55,18 +75,17 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button http_get, http_post;
+    Button http_get, http_post, http_delete;
     TextView text_response;
     ProgressDialog progress;
     Switch gpsswitch;
-//    private RequestPermissionHandler mRequestPermissionHandler;
-private static final String TAG = MainActivity.class.getSimpleName();
+    //    private RequestPermissionHandler mRequestPermissionHandler;
+    private static final String TAG = MainActivity.class.getSimpleName();
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 
 
     private boolean mAlreadyStartedService = false;
 
-  
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +99,7 @@ private static final String TAG = MainActivity.class.getSimpleName();
 
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                Log.v("Switch State=", ""+isChecked);
+                Log.v("Switch State=", "" + isChecked);
                 startStopService(isChecked);
             }
 
@@ -103,6 +122,17 @@ private static final String TAG = MainActivity.class.getSimpleName();
             public void onClick(View v) {
                 if (isNetworkAvaiable()) {
                     http_post_request();
+                } else {
+                    alertDialog("Offline", "No Internet Connection");
+                }
+            }
+        });
+
+        http_delete = (Button) findViewById(R.id.http_delete);
+        http_delete.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (isNetworkAvaiable()) {
+                    http_delete_request();
                 } else {
                     alertDialog("Offline", "No Internet Connection");
                 }
@@ -134,7 +164,6 @@ private static final String TAG = MainActivity.class.getSimpleName();
     }
 
 
-
     private boolean isNetworkAvaiable() {
         ConnectivityManager cm = (ConnectivityManager) getApplicationContext()
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -149,12 +178,14 @@ private static final String TAG = MainActivity.class.getSimpleName();
 
 
     String myResponse;
+    ArrayList<HashMap<String, Object>> aList = new ArrayList<>();
 
     private void http_get_request() {
         try {
             progress.show();
             myResponse = "";
-            String url = "https://angular-db-fa163.firebaseio.com/freejson.json";
+            // String url = "https://angular-db-fa163.firebaseio.com/freejson.json";
+            String url = "https://angular-db-fa163.firebaseio.com/locationtrack/" + MyApplication.deviceID + ".json";
 
             OkHttpClient client = new OkHttpClient.Builder()
                     .connectTimeout(10, TimeUnit.SECONDS)
@@ -177,24 +208,46 @@ private static final String TAG = MainActivity.class.getSimpleName();
                 }
 
                 @Override
-                public void onResponse(Call call, Response response) throws IOException {
+                public void onResponse(Call call, final Response response) throws IOException {
                     progress.dismiss();
-                    myResponse = response.toString() + "\n";
 
-//                    try {
-//                        //JsonObject newObj = new JsonParser().parse(response.body().toString()).getAsJsonObject();
-//                        JsonArray newArr = new JsonParser().parse(response.body().toString()).getAsJsonArray();
-//                        myResponse += String.valueOf(newArr);
-//                    } catch (Exception e) {
-//                        Log.d("-->>", getStackTrace(e));
-                        myResponse += response.body().toString();
-//                    }
-
-
-                    Log.d("-->>", myResponse);
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            try {
+                                myResponse = response.body().string();//response.body().toString(); response.toString() + "\n" +
+                                aList = new ArrayList<>();
+
+                                JsonObject json1 = (JsonObject) (new JsonParser()).parse(myResponse);
+                                myResponse = response.toString() + "\n" + String.valueOf(json1);
+
+                                //Log.d("-->>", myResponse);
+                                Set<Map.Entry<String, JsonElement>> entrySet = json1.entrySet();
+                                for(Map.Entry<String,JsonElement> entry : entrySet){
+                                    //Log.d("-->>", entry.getKey()+ json1.get(entry.getKey()));
+                                    JsonObject json2 = (JsonObject)json1.get(entry.getKey());
+                                    Set<Map.Entry<String, JsonElement>> entrySet2 = json2.entrySet();
+                                    for(Map.Entry<String,JsonElement> entry2 : entrySet2){
+                                        //Log.d("-->>", entry2.getKey()+ json2.get(entry2.getKey()));
+                                        JsonObject json3 = (JsonObject)json2.get(entry2.getKey());
+                                        HashMap<String, Object> hm = new HashMap<>();
+                                        hm.put("Accuracy", json3.get("Accuracy"));
+                                        hm.put("Altitude", json3.get("Altitude"));
+                                        hm.put("Latitude", json3.get("Latitude"));
+                                        hm.put("Longitude", json3.get("Longitude"));
+                                        //hm.put("Provider", json3.get("Provider"));
+                                        hm.put("Speed", json3.get("Speed"));
+                                        hm.put("TimeStamp", json3.get("TimeStamp"));
+                                        hm.put("Date", entry.getKey());
+                                        aList.add(hm);
+                                    }
+                                }
+                                Log.d("-->>", aList.toString());
+                            } catch (Exception e) {
+                                Log.d("-->>", getStackTrace(e));
+                                myResponse += response.toString();
+                            }
+
                             text_response.setText(myResponse);
                         }
                     });
@@ -270,6 +323,59 @@ private static final String TAG = MainActivity.class.getSimpleName();
         }
     }
 
+
+    private void http_delete_request() {
+        try {
+            progress.show();
+            String url = "https://angular-db-fa163.firebaseio.com/locationtrack/" + MyApplication.deviceID + ".json";
+
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .connectTimeout(10, TimeUnit.SECONDS)
+                    .writeTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .build();
+
+            Request request = new Request.Builder()
+                    .url(url)
+                    .delete()
+                    .build();
+            Log.d("-->>", request.toString());
+
+
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    call.cancel();
+                    progress.dismiss();
+                    Log.d("-->>", getStackTrace(e));
+                    alertDialog("Request Failure", getStackTrace(e));
+                }
+
+                @Override
+                public void onResponse(Call call, final Response response) throws IOException {
+                    progress.dismiss();
+                    myResponse = response.toString() + "\n" + "Delete Location History";
+
+                    Log.d("-->>", myResponse);
+                    MainActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            text_response.setText(myResponse);
+                            if (response.code() == 200) {
+                                alertDialog("Delete", "Location History");
+                            }
+                        }
+                    });
+
+                }
+            });
+        } catch (Exception e) {
+            progress.dismiss();
+            Log.d("-->>", getStackTrace(e));
+            alertDialog("Exception", getStackTrace(e));
+        }
+    }
+
     public String getStackTrace(Throwable aThrowable) {
         final Writer result = new StringWriter();
         final PrintWriter printWriter = new PrintWriter(result);
@@ -310,14 +416,6 @@ private static final String TAG = MainActivity.class.getSimpleName();
         hm.put("phone", 987654321);
         body.add(hm);
         return gson.toJson(body);
-    }
-
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        checkGooglePlayServices();
     }
 
 
@@ -574,7 +672,7 @@ private static final String TAG = MainActivity.class.getSimpleName();
 
 
     private void startStopService(boolean isChecked) {
-        if(isChecked){
+        if (isChecked) {
 
             //And it will be keep running until you close the entire application from task manager.
             //This method will executed only once.
@@ -600,5 +698,139 @@ private static final String TAG = MainActivity.class.getSimpleName();
         }
 
     }
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // put your code here....
+
+        checkGooglePlayServices();
+
+
+        settingsrequest();
+//        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+//        if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+//            showSettingsAlert("Enable Location Access");
+//            createLocationRequest();
+//        }
+    }
+
+    protected static final int REQUEST_CHECK_SETTINGS = 0x1;
+    GoogleApiClient googleApiClient;
+
+    public void settingsrequest() {
+
+
+        if (googleApiClient == null) {
+            googleApiClient = new GoogleApiClient.Builder(MainActivity.this)
+                    .addApi(LocationServices.API)
+                    .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+                        @Override
+                        public void onConnected(Bundle bundle) {
+
+                        }
+
+                        @Override
+                        public void onConnectionSuspended(int i) {
+                            googleApiClient.connect();
+                        }
+                    })
+                    .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
+                        @Override
+                        public void onConnectionFailed(ConnectionResult connectionResult) {
+
+                            Log.d("Location error", "Location error " + connectionResult.getErrorCode());
+                        }
+                    }).build();
+            googleApiClient.connect();
+
+            LocationRequest locationRequest = LocationRequest.create();
+            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            locationRequest.setInterval(30 * 1000);
+            locationRequest.setFastestInterval(5 * 1000);
+            LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                    .addLocationRequest(locationRequest);
+            builder.setAlwaysShow(true); //this is the key ingredient
+
+            PendingResult<LocationSettingsResult> result =
+                    LocationServices.SettingsApi.checkLocationSettings(googleApiClient, builder.build());
+            result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+                @Override
+                public void onResult(LocationSettingsResult result) {
+                    final Status status = result.getStatus();
+                    final LocationSettingsStates state = result.getLocationSettingsStates();
+                    switch (status.getStatusCode()) {
+                        case LocationSettingsStatusCodes.SUCCESS:
+                            // All location settings are satisfied. The client can initialize location
+                            // requests here.
+                            break;
+                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                            // Location settings are not satisfied. But could be fixed by showing the user
+                            // a dialog.
+                            try {
+                                // Show the dialog by calling startResolutionForResult(),
+                                // and check the result in onActivityResult().
+                                status.startResolutionForResult(MainActivity.this, REQUEST_CHECK_SETTINGS);
+                            } catch (IntentSender.SendIntentException e) {
+                                // Ignore the error.
+                            }
+                            break;
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                            // Location settings are not satisfied. However, we have no way to fix the
+                            // settings so we won't show the dialog.
+                            break;
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+// Check for the integer request code originally supplied to startResolutionForResult().
+            case REQUEST_CHECK_SETTINGS:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+//                        startLocationUpdates();
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        settingsrequest();//keep asking if imp or do whatever
+                        break;
+                }
+                break;
+        }
+    }
+
+    public void showSettingsAlert(String s) {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+
+
+        // Setting Dialog Title
+        alertDialog.setTitle(s);//+ String.valueOf(b)
+
+        // Setting Dialog Message
+        alertDialog.setMessage("GPS is not enabled. Do you want to go to settings menu?");
+
+        // On pressing Settings button
+        alertDialog.setPositiveButton("Settings", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                startActivity(intent);
+            }
+        });
+
+        // on pressing cancel button
+        alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        // Showing Alert Message
+        alertDialog.show();
+    }
+
 
 }

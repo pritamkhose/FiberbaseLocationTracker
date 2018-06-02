@@ -29,6 +29,7 @@ public class LocationMonitoringService extends Service implements
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
 
+    GoogleApiClient mGoogleApiClient;
 
     private static final String TAG = LocationMonitoringService.class.getSimpleName();
     GoogleApiClient mLocationClient;
